@@ -16,9 +16,17 @@ Static Spring Cloud Gateway routes from Java/Kotlin `route(...)` DSL or
 opens in a request tab; tabs keep their own draft and last response. A WebSocket
 panel connects, sends text and polls received frames.
 
+Java/Kotlin methods also get a hover-revealed **Call this method** action at the
+left edge of the editor, without adding permanent gutter icons. The action is
+anchored to the method declaration, appears while the pointer is in the first
+four editing-area columns of any line in the method body, and opens the same
+Debug page as the runtime agent controls.
+
 This is a clean-room plugin for the OpenIDEA plugin API. The host-side
 `java-agent` / `java.agent` injection used by the runtime channel is a small
-OpenIDEA extension, not code from Cool Request.
+OpenIDEA extension; no GPL plugin code or assets are included. The plugin uses
+plugin API 1.14 and declares both the `gutter-actions` and `hover-actions`
+provider kinds.
 
 ## Runtime agent (host extension)
 
@@ -61,11 +69,12 @@ so a runtime endpoint with no static source can still be selected and sent.
 classes (controller + `target/classes`/`build/classes` beans). Frames carry type,
 method, duration, depth, thread and error; the agent keeps the newest 500. Trace
 is off by default and is an explicit toggle; JDK/Spring/library classes are not
-instrumented. SQL/scripts/MCP are the next layers.
+instrumented. SQL tracing, the Java script console and MCP tools are available
+from the footer.
 
 ## UI
 
-The 0.23.x/0.24.x layout follows the current Cool Request desktop tool window:
+The tool window layout:
 
 - a four-view left rail: **API list**, **Request / debug**, **History** and **Settings**;
 - module → controller → API tree, with the project/module API counts, fully
@@ -84,9 +93,8 @@ The 0.23.x/0.24.x layout follows the current Cool Request desktop tool window:
 Icons are adapted from the Apache-2.0 OpenIDEA EXPUI icon set, which follows the
 JetBrains icon language.
 
-The reference was the official preview of the current Cool Request 2026.11.1
-package. Its main UI is Java Swing; no GPL code or assets were copied into this
-Apache-2.0 plugin.
+This is an independent implementation for OpenIDEA. No GPL plugin code or assets
+are copied into this Apache-2.0 plugin.
 
 ![API Client UI](dist/ui-preview.png)
 
@@ -112,6 +120,14 @@ endpoint; it does not generate a `.http` tab. The icon sits in the IDE's gutter
 beside the line markers; its exact side relative to the IDE's own **API** icon is
 the IDE's layout choice. The built-in **API** popup still generates its own
 `.http` request and cannot be replaced by a plugin.
+
+Every callable Java/Kotlin method gets a **Call this method** hover action
+(plugin API `hover-actions`). Move the pointer into the first four columns of
+the editing area on any line of the method body; the play button appears beside
+the declaration line. Moving left into the gutter keeps it visible, while moving
+right into the code hides it. The button never covers code text. The editor
+context menu lists the actions whose line range contains the caret, so they are
+also reachable from the keyboard.
 
 If the hummingbird icon is not visible, check that the plugin is enabled and the
 file is Java or Kotlin, then reopen the file. **Spring API Client: Select Endpoint
@@ -161,7 +177,7 @@ endpoints.
   API** in Find Action does the same from anywhere.
 - Sending stores the current parameters and the response in plugin storage; opening
   the endpoint again restores them and shows the cached response. Switching away
-  without sending discards the edits, matching Cool Request's behavior.
+  without sending discards the edits, matching the request-tab behavior.
 - Response **Tree** tab renders collapsible JSON objects/arrays with typed leaves.
 - **Save response** writes JSON/XML/HTML/text under
   `.openidea/api-client/responses/`; image responses are previewed inline but are
@@ -172,7 +188,7 @@ endpoints.
   badge; **×** deletes it.
 - **Stress** runs up to 200 requests one after another and reports ok/failed and
   average/min/max latency. The WASM sandbox has no threads, so this is a
-  sequential load loop, not Cool Request's parallel stress test.
+  sequential load loop, not a parallel stress test.
 - **Timeout** in the request footer sets the per-request timeout (default 30 s,
   clamped to 100 ms–300 s).
 - **Cookies**: `Set-Cookie` responses are stored per host and sent as a `Cookie`
@@ -226,12 +242,13 @@ plugin reads the nearest module's `src/main/resources/application.properties` /
 
 ## Limits
 
-- The client workbench is covered end to end, but it does **not** reflect into the
-  running JVM, bypass interceptors, trigger scheduled tasks, run Java scripts, or
-  support gRPC/WebSocket/SSE. Those need a JVM agent or a separate process; see
-  [ROADMAP.md](ROADMAP.md).
+- Reflection, schedules, scripts, SQL tracing and method tracing need the Java
+  agent and the `java.agent` permission; they are unavailable when the runtime
+  context is not ready. Servlet request/response parameters and multipart
+  reflection bodies are not supported.
 - SSE streaming is not available through the current plugin host API (fetch is
-  non-streaming); WebSocket is the supported streaming protocol.
+  non-streaming); WebSocket is the supported streaming protocol. gRPC is not
+  implemented; see [ROADMAP.md](ROADMAP.md).
 - Apipost export is not wired yet; its Open API endpoint/token model differs from
   Apifox and needs a separate integration.
 - Cookie attribute/path modelling and tab persistence are the next planned batch.
@@ -244,15 +261,62 @@ plugin reads the nearest module's `src/main/resources/application.properties` /
 - Annotation parsing is pragmatic, not a compiler: unusual generated code,
   deeply nested controllers or exotic Kotlin signatures may not prefill.
 
+## Plugin API
+
+```toml
+engines.openidea = "^1.14"
+wasm = "dist/plugin.wasm"
+
+[[contributes.providers]]
+kinds = ["gutter-actions", "hover-actions"]
+languages = ["java", "kotlin"]
+```
+
+- `gutter-actions`: the hummingbird endpoint marker per Spring mapping.
+- `hover-actions`: the **Call this method** action. `line` is the method
+  declaration, `start-line`/`end-line` cover the method body, and the command is
+  `call-method`.
+- The hover action is skipped for constructors and for methods the parser cannot
+  identify as callable.
+
+API 1.14 is currently delivered by the OpenIDEA PR branch
+`feat/inline-editor-actions`; once the API is released, the plugin can depend on
+the released SDK.
+
 ## Build
+
+The checked-in `Cargo.toml` points at the OpenIDEA SDK checkout used for this
+plugin. From a fresh clone, clone the API branch next to this repository:
+
+```sh
+git clone -b feat/inline-editor-actions \
+  https://github.com/NeverKnowsTomorrow/openidea ../openidea-inline-actions
+```
+
+Then:
 
 ```sh
 CARGO_HOME="$PWD/.cargo-home" cargo test
 CARGO_HOME="$PWD/.cargo-home" cargo build --release --target wasm32-wasip2
 cp target/wasm32-wasip2/release/openidea_spring_api_client.wasm dist/plugin.wasm
-../openidea/target/debug/openidea-plugin check .
-../openidea/target/debug/openidea-plugin link .
+
+# build the Java agent if agent/src changed
+./agent/build.sh
+
+# validate and pack
+../openidea-inline-actions/target/debug/openidea-plugin check .
+(cd dist && ../../openidea-inline-actions/target/debug/openidea-plugin pack ..)
 ```
 
-`openidea-plugin` is built from the IDE checkout with
-`cargo build -p ide-host --bin openidea-plugin`.
+`openidea-plugin` is built from the IDE checkout with:
+
+```sh
+cargo build -p ide-host --bin openidea-plugin
+```
+
+The checked-in `dist/community.spring-api-client-0.50.0.oiplugin` is the
+unsigned package for this source tree.
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE).
