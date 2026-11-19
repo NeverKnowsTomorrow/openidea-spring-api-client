@@ -1,0 +1,7 @@
+/target
+/.cargo-home
+/agent/build
+/agent/.openidea
+.DS_Store
+dist/community.spring-api-client-*.oiplugin
+!dist/community.spring-api-client-0.50.0.oiplugin

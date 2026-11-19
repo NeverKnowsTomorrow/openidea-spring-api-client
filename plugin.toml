@@ -1,0 +1,117 @@
+id = "community.spring-api-client"
+name = "Spring API Client"
+version = "0.50.0"
+description = "Browse Spring Controllers, build a request without writing a .http file, send it, and inspect the response. Copy as cURL or save the request as .http."
+authors = ["OpenIDEA community"]
+license = "Apache-2.0"
+change-notes = "0.50.0 — use the optional hover-actions API for Call this method."
+categories = ["frameworks", "tools"]
+icon = "icons/hummingbird.svg"
+engines.openidea = "^1.14"
+wasm = "dist/plugin.wasm"
+activation = ["on-view:api-client", "on-command:*", "on-language:java", "on-language:kotlin"]
+
+[capabilities]
+required = ["project.read", "project.write", "clipboard", "storage", "editor.read", "net:localhost", "net:127.0.0.1"]
+optional = ["net:ask"]
+
+[[contributes.javaAgents]]
+path = "agent/openidea-spring-agent.jar"
+
+[[contributes.views]]
+id = "api-client"
+title = "API Client"
+icon = "icons/hummingbird.svg"
+location = "right"
+
+[[contributes.commands]]
+id = "show"
+title = "Spring API Client: Open"
+category = "Spring API Client"
+
+[[contributes.commands]]
+id = "refresh"
+title = "Spring API Client: Refresh Endpoints"
+category = "Spring API Client"
+
+[[contributes.commands]]
+id = "open-endpoint"
+title = "Spring API Client: Open Endpoint"
+category = "Spring API Client"
+
+[[contributes.commands]]
+id = "gateway"
+title = "Spring API Client: Gateway Routes"
+category = "Spring API Client"
+
+[[contributes.commands]]
+id = "mcp"
+title = "Spring API Client: MCP Tools"
+category = "Spring API Client"
+
+[[contributes.commands]]
+id = "script"
+title = "Spring API Client: Run Java Script"
+category = "Spring API Client"
+
+[[contributes.commands]]
+id = "sql"
+title = "Spring API Client: SQL Log"
+category = "Spring API Client"
+
+[[contributes.commands]]
+id = "trace"
+title = "Spring API Client: Trace Methods"
+category = "Spring API Client"
+
+[[contributes.commands]]
+id = "trigger-schedule"
+title = "Spring API Client: Trigger Scheduled Method"
+category = "Spring API Client"
+
+[[contributes.commands]]
+id = "search-api"
+title = "Spring API Client: Search API"
+category = "Spring API Client"
+
+[[contributes.commands]]
+id = "call-method"
+title = "Spring API Client: Call This Method"
+category = "Spring API Client"
+
+[[contributes.commands]]
+id = "trace-at-caret"
+title = "Spring API Client: Add Method To Trace"
+category = "Spring API Client"
+
+[[contributes.commands]]
+id = "select-at-caret"
+title = "Spring API Client: Select Endpoint at Caret"
+category = "Spring API Client"
+
+[[contributes.providers]]
+kinds = ["gutter-actions", "hover-actions"]
+languages = ["java", "kotlin"]
+
+[[contributes.markerIcons]]
+id = "hummingbird"
+icon = "icons/hummingbird.svg"
+
+
+[[contributes.menus]]
+menu = "tools"
+command = "show"
+
+[[contributes.menus]]
+menu = "tools"
+command = "search-api"
+
+[[contributes.menus]]
+menu = "editor.context"
+command = "select-at-caret"
+when = "editorLangId == java || editorLangId == kotlin"
+
+[[contributes.menus]]
+menu = "editor.context"
+command = "trace-at-caret"
+when = "editorLangId == java || editorLangId == kotlin"

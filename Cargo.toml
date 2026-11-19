@@ -1,0 +1,22 @@
+[package]
+name = "openidea-spring-api-client"
+version = "0.50.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+openidea-plugin = { path = "../openidea-inline-actions/sdk/rust/openidea-plugin" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
+codegen-units = 1
+panic = "abort"
