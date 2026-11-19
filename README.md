@@ -96,7 +96,9 @@ JetBrains icon language.
 This is an independent implementation for OpenIDEA. No GPL plugin code or assets
 are copied into this Apache-2.0 plugin.
 
-![API Client UI](dist/ui-preview.png)
+![API Client endpoint list and tool window](dist/ui-overview.webp)
+
+![API Client request and response view](dist/ui-request.webp)
 
 ## Use
 
